@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-def prepare_graph(label, nodes, edges):
+def prepare_graph(label, nodes, edges, graphID):
     """
     takes in graph information and returns a dictionary of basic features for that graph
     as well as the graph as a networkx graph
@@ -11,6 +11,7 @@ def prepare_graph(label, nodes, edges):
     label - class label of the graph
     nodes - csv of graph nodes 
     edges = txt file of graph edges
+    graphid - unique ID for the graph
     """
     features = {'label': label}
 
@@ -59,62 +60,100 @@ def prepare_graph(label, nodes, edges):
     features['transitivity'] = nx.transitivity(G)
     node_list = list(set(node_list))
     features['nodeID_list'] = np.array(node_list)
+    features['graph_id'] = graphID
     return features, G
 
-def get_training_dataframe(dataset_path, two_class=True):
+def prep_node_info(rows_for_node_df, nodes, graph_id):
+    """
+    takes in graph info and computes info about each node
+    puts info about each node in rows_for_node_df as an object
+    """
+    for _, node in nodes.iterrows():
+        feats = {'graph_id': graph_id}
+        feats['node_id'], feats['time'], feats['friends'], feats['followers'] = node['id'], node['time'], node['friends'], node['followers']
+        rows_for_node_df.append(feats)
+
+
+
+
+def get_training_dataframe(dataset_path, two_class=True, get_node_df=False):
     """
     goes through the provided dataset and creates a dataframe with a row for each graph.
     columns of the dataframe are the basic features defined above
     returns the dataframe and a dictionary mapping labels to lists of graphs for that label
+    also can return a dataframe with info for the individual nodes
 
     args:
     two_class - if true, return a dataframe for 2 class classification (conspiracy class is positive)
     if false, return a dataframe for 3 class classification (other conspiracy category is its own class)
     this arguement changes the label in the dataframe and nothing else
+
+    node_df: if true, returns a dataframe with a row for each node
+
     """
     training_df = pd.DataFrame()
     graph_dict = {}
 
-    to_add = []
+
+    rows_for_training_df = []
     
+    if get_node_df:
+        node_df  = pd.DataFrame()
+        rows_for_node_df = []
+
+
     # add conspiracy graphs to dataframe
     conspiracy_graphs = []
     for i in range(1,271): # 270 total
+        graph_id = 'consp'+str(i)
         conspiracy_path = dataset_path + "5g_corona_conspiracy/"
         nodes = pd.read_csv(conspiracy_path + str(i)+ "/nodes.csv")
         edges = open(conspiracy_path + str(i)+ "/edges.txt")
 
-        features, G = prepare_graph(1, nodes, edges)
-        to_add.append(features)
+        features, G = prepare_graph(1, nodes, edges, graph_id)
+        rows_for_training_df.append(features)
+        if get_node_df:
+            prep_node_info(rows_for_node_df, nodes, graph_id)
         edges.close()
         conspiracy_graphs.append(G)
     graph_dict['conspiracy_graphs'] = conspiracy_graphs
 
     non_conspiracy_graphs = []
     for i in range(1,1661): # 1660 total
+        graph_id = 'non_consp'+str(i)
         path = dataset_path + "non_conspiracy/"
         nodes = pd.read_csv(path + str(i)+ "/nodes.csv")
         edges = open(path + str(i)+ "/edges.txt")
 
         label = 0 if two_class else 3
-        features, G = prepare_graph(label, nodes, edges)
-        to_add.append(features)
+        features, G = prepare_graph(label, nodes, edges, graph_id)
+        rows_for_training_df.append(features)
+        if get_node_df:
+            prep_node_info(rows_for_node_df, nodes, graph_id)
+        edges.close()
         edges.close()
         non_conspiracy_graphs.append(G)
     graph_dict['non_conspiracy_graphs'] = non_conspiracy_graphs
 
     other_conspiracy_graphs = []
     for i in range(1,398): # 397 total
+        graph_id = 'other_consp'+str(i)
         path = dataset_path + "other_conspiracy/"
         nodes = pd.read_csv(path + str(i)+ "/nodes.csv")
         edges = open(path + str(i)+ "/edges.txt")
 
         label = 0 if two_class else 2
-        features, G = prepare_graph(label, nodes, edges)
-        to_add.append(features)
+        features, G = prepare_graph(label, nodes, edges, graph_id)
+        rows_for_training_df.append(features)
+        if get_node_df:
+            prep_node_info(rows_for_node_df, nodes, graph_id)
+        edges.close()
         edges.close()
         other_conspiracy_graphs.append(G)
     graph_dict['other_conspiracy_graphs'] = other_conspiracy_graphs
 
-    training_df = training_df.append(to_add)
+    training_df = training_df.append(rows_for_training_df)
+    if get_node_df:
+        node_df = node_df.append(rows_for_node_df)
+        return training_df, graph_dict, node_df
     return training_df, graph_dict

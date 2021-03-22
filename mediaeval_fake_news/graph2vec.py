@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 
-def get_weighted_average_embeddings(graphs, num_dimensions=64):
+def get_weighted_average_embeddings(graphs, label, num_dimensions=64):
     """ uses the graph2vec package to get embeddings for the input graph
     returns a dataframe with the average embeddings for each graph's subgraph weighted by the nodes in that subgraph
     """
@@ -36,6 +36,7 @@ def get_weighted_average_embeddings(graphs, num_dimensions=64):
         weighted_averages = np.append(weighted_averages, weighted_average, axis=0)
       start += subgraph_count
     weighted_g2v = pd.DataFrame(data=weighted_averages, columns=["weighted_g2v" + str(i) for i in range(0,num_dimensions)])
+    weighted_g2v['label'] = np.full(shape=len(graphs), fill_value=label)
     return weighted_g2v
 
 def get_largest_subgraph_embedding(graphs, num_dimensions=64):

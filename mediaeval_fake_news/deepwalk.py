@@ -5,13 +5,15 @@ import networkx as nx
 
  
 
-def clean_for_deepwalk(dataset_path, outfile='for_deepwalk'):
+def clean_for_deepwalk(dataset_path, outfile='for_deepwalk', directed=True):
     """
     cleans graphs for deepwalk
     make a single (disconnected) graph that is the compilation of every graph in order to run deepwalk on it.
+
+    returns the single graph detailed above
     """
 
-    G = nx.Graph()
+    G = nx.DiGraph() if directed else nx.Graph()
 
     nodes = []
     for i in range(1,271): # 270 total
@@ -25,8 +27,8 @@ def clean_for_deepwalk(dataset_path, outfile='for_deepwalk'):
             if node2 not in nodes:
                 nodes.append(node2)
         edges.close()
-    print(G.number_of_nodes())
-    print(len(nodes))
+    #print(G.number_of_nodes())
+    #print(len(nodes))
 
     nodes = []
     for i in range(1,398): # 397 total
@@ -39,11 +41,11 @@ def clean_for_deepwalk(dataset_path, outfile='for_deepwalk'):
                 nodes.append(node1)
             if node2 not in nodes:
                 nodes.append(node2)
-        if i % 100 == 0:
-            print("added graph " + str(i))
+        #if i % 100 == 0:
+        #    print("added graph " + str(i))
         edges.close()
-    print(G.number_of_nodes())
-    print(len(nodes))
+    #print(G.number_of_nodes())
+    #print(len(nodes))
 
     nodes = []
     for i in range(1,1661): # 1660 total
@@ -56,12 +58,13 @@ def clean_for_deepwalk(dataset_path, outfile='for_deepwalk'):
                 nodes.append(node1)
             if node2 not in nodes:
                 nodes.append(node2)
-        if i % 100 == 0:
-            print("added graph " + str(i))
+        #if i % 100 == 0:
+        #    print("added graph " + str(i))
         edges.close()
-    print(G.number_of_nodes())
-    print(len(nodes))
+    #print(G.number_of_nodes())
+    #print(len(nodes))
 
 
-    print(G.number_of_edges())
+    #print(G.number_of_edges())
     nx.write_edgelist(G, outfile + ".edgelist")
+    return G
