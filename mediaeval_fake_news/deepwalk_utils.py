@@ -3,8 +3,6 @@ import networkx as nx
 #NOTE: the deepwalk script needs to be run from the command line
 # see https://github.com/phanein/deepwalk
 
- 
-
 def clean_for_deepwalk(dataset_path, outfile='for_deepwalk', directed=True):
     """
     cleans graphs for deepwalk
