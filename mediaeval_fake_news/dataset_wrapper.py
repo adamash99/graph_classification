@@ -19,7 +19,7 @@ class GraphDataset(Dataset):
     def __len__(self):
         return self.num_points
     
-    def __getItem__(self, idx):
+    def __getitem__(self, idx):
         row = self.df.iloc[idx, :]
         if self.transform != None:
             feats = self.transform(row, self.embeddings, self.node_df)
@@ -31,6 +31,9 @@ class GraphDataset(Dataset):
             target = self.target_transform(target, self.label_count)
             
         return (feats, target)
+
+    def num_classes(self):
+        return len(self.labels.unique())
 
 def x_transform(row, embeddings, node_df):
     """
@@ -52,5 +55,5 @@ def y_transform(label, label_count):
     label_count:    number of different labels in dataset
     """
     label_tensor = th.zeros((label_count))
-    label_tensor[label] = 1
-    return label_tensor
+    label_tensor[label-1] = 1
+    return label-1
